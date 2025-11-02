@@ -12,15 +12,17 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [storageUsed, setStorageUsed] = useState(0)
-  const [storageLimit] = useState(5368709120)
+  const [storageLimit] = useState(5368709120) // 5GB
   const [currentFolderId, setCurrentFolderId] = useState<string | undefined>()
 
   const router = useRouter()
 
+  // When component loads, check if user is logged in
   useEffect(() => {
     checkAuth()
   }, [])
 
+  // Check if user is logged in
   const checkAuth = async () => {
     const { data } = await supabase.auth.getUser()
     if (!data.user) {
@@ -32,11 +34,13 @@ export default function Dashboard() {
     setLoading(false)
   }
 
+  // Get storage usage info
   const getStorageInfo = async () => {
     try {
       const user = await supabase.auth.getUser()
       if (!user.data.user) return
 
+      // Get user's total file sizes (excluding folders)
       const { data, error } = await supabase
         .from('files')
         .select('size')
@@ -46,6 +50,7 @@ export default function Dashboard() {
 
       if (error) throw error
 
+      // Calculate total storage used
       const totalUsed = data?.reduce((sum, file) => sum + (file.size || 0), 0) || 0
       setStorageUsed(totalUsed)
     } catch (error) {
@@ -53,52 +58,52 @@ export default function Dashboard() {
     }
   }
 
+  // Logout function
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/signin')
   }
 
+  // Handle folder navigation
   const handleFolderClick = (folderId?: string) => {
     setCurrentFolderId(folderId)
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-300">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading your files...</p>
+          <p className="text-gray-600">Loading your files...</p>
         </div>
       </div>
     )
   }
 
+  // Calculate storage percentage
   const storagePercentage = Math.min((storageUsed / storageLimit) * 100, 100)
-  const storageColor = storagePercentage > 90 ? 'bg-red-600' :
-    storagePercentage > 75 ? 'bg-yellow-600' : 'bg-blue-600'
+  const storageColor = storagePercentage > 90 ? 'bg-red-600' : 
+                       storagePercentage > 75 ? 'bg-yellow-600' : 'bg-blue-600'
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-300">
-      {/* Header */}
-      <div className="bg-white dark:bg-dark-200 border-b border-gray-200 dark:border-gray-700 px-4 py-3 sticky top-0 z-40">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header/Navigation */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
           <div className="flex items-center gap-3">
             <div className="bg-blue-600 text-white p-2 rounded-lg">
               <span className="text-xl">☁️</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">OnDrive</h1>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Secure Cloud Storage</p>
+              <h1 className="text-xl font-bold text-gray-900">OnDrive</h1>
+              <p className="text-xs text-gray-600">Secure Cloud Storage</p>
             </div>
           </div>
 
           <div className="flex items-center gap-4">
-            {/* Theme Toggle Button */}
-            <ThemeToggle />
-            
             <div className="text-right">
-              <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Welcome back</p>
-              <p className="text-sm font-semibold text-gray-800 dark:text-white truncate max-w-[200px]">
+              <p className="text-sm text-gray-600 hidden sm:block">Welcome back</p>
+              <p className="text-sm font-semibold text-gray-800">
                 {user?.email}
               </p>
             </div>
@@ -116,20 +121,20 @@ export default function Dashboard() {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-4">
         {/* Storage info */}
-        <div className="mb-6 p-4 bg-white dark:bg-dark-200 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+        <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Storage Usage</p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm font-medium text-gray-700">Storage Usage</p>
+            <p className="text-sm text-gray-600">
               {(storageUsed / 1024 / 1024).toFixed(2)} MB / {(storageLimit / 1024 / 1024 / 1024).toFixed(1)} GB
             </p>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+          <div className="w-full bg-gray-200 rounded-full h-2">
             <div
               className={`h-2 rounded-full transition-all ${storageColor}`}
               style={{ width: `${storagePercentage}%` }}
             ></div>
           </div>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+          <p className="text-xs text-gray-500 mt-2">
             {storagePercentage.toFixed(1)}% of storage used
           </p>
         </div>
@@ -140,26 +145,26 @@ export default function Dashboard() {
             onClick={() => router.push('/dashboard')}
             className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium transition-colors"
           >
-            My Files
+            📁 My Files
           </button>
           <button
             onClick={() => router.push('/dashboard/shared-with-me')}
             className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium transition-colors"
           >
-            Shared with Me
+            👥 Shared with Me
           </button>
           <button
             onClick={() => router.push('/dashboard/trash')}
             className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 font-medium transition-colors"
           >
-            Trash
+            🗑️ Trash
           </button>
         </div>
 
-        {/* File Upload */}
+        {/* Upload Section */}
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-            {currentFolderId ? 'Current Folder' : 'Upload Files'}
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {currentFolderId ? '📁 Current Folder' : '📤 Upload Files'}
           </h2>
           <FileUpload
             onUploadComplete={() => {
@@ -169,12 +174,12 @@ export default function Dashboard() {
           />
         </div>
 
-        {/* File List */}
+        {/* Files Section */}
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-            {currentFolderId ? 'Folder Contents' : 'My Files'}
+          <h2 className="text-xl font-bold text-gray-900 mb-4">
+            {currentFolderId ? '📂 Folder Contents' : '📂 My Files'}
           </h2>
-          <FileList
+          <FileList 
             refreshTrigger={refreshTrigger}
             currentFolderId={currentFolderId}
             onFolderClick={handleFolderClick}
@@ -183,4 +188,5 @@ export default function Dashboard() {
       </div>
     </div>
   )
+  
 }
